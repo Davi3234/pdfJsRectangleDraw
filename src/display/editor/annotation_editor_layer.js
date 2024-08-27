@@ -28,6 +28,7 @@ import { AnnotationEditor } from "./editor.js";
 import { FreeTextEditor } from "./freetext.js";
 import { HighlightEditor } from "./highlight.js";
 import { InkEditor } from "./ink.js";
+import { RectangleEditor } from "./rectangle.js";
 import { setLayerDimensions } from "../display_utils.js";
 import { StampEditor } from "./stamp.js";
 
@@ -84,7 +85,7 @@ class AnnotationEditorLayer {
   static _initialized = false;
 
   static #editorTypes = new Map(
-    [FreeTextEditor, InkEditor, StampEditor, HighlightEditor].map(type => [
+    [FreeTextEditor, InkEditor, StampEditor, HighlightEditor, RectangleEditor].map(type => [
       type._editorType,
       type,
     ])
@@ -164,6 +165,14 @@ class AnnotationEditorLayer {
         this.togglePointerEvents(true);
         this.disableClick();
         break;
+      case AnnotationEditorType.RECTANGLE:
+        // We always want to have an ink editor ready to draw in.
+        this.addRectangleEditorIfNeeded(false);
+
+        this.disableTextSelection();
+        this.togglePointerEvents(true);
+        this.disableClick();
+        break;
       case AnnotationEditorType.HIGHLIGHT:
         this.enableTextSelection();
         this.togglePointerEvents(false);
@@ -192,6 +201,30 @@ class AnnotationEditorLayer {
 
   addInkEditorIfNeeded(isCommitting) {
     if (this.#uiManager.getMode() !== AnnotationEditorType.INK) {
+      // We don't want to add an ink editor if we're not in ink mode!
+      return;
+    }
+
+    if (!isCommitting) {
+      // We're removing an editor but an empty one can already exist so in this
+      // case we don't need to create a new one.
+      for (const editor of this.#editors.values()) {
+        if (editor.isEmpty()) {
+          editor.setInBackground();
+          return;
+        }
+      }
+    }
+
+    const editor = this.createAndAddNewEditor(
+      { offsetX: 0, offsetY: 0 },
+      /* isCentered = */ false
+    );
+    editor.setInBackground();
+  }
+
+  addRectangleEditorIfNeeded(isCommitting) {
+    if (this.#uiManager.getMode() !== AnnotationEditorType.RECTANGLE) {
       // We don't want to add an ink editor if we're not in ink mode!
       return;
     }
@@ -448,6 +481,7 @@ class AnnotationEditorLayer {
 
     if (!this.#isCleaningUp) {
       this.addInkEditorIfNeeded(/* isCommitting = */ false);
+      this.addRectangleEditorIfNeeded(/* isCommitting = */ false);
     }
   }
 
@@ -871,6 +905,7 @@ class AnnotationEditorLayer {
       }
     }
     this.addInkEditorIfNeeded(/* isCommitting = */ false);
+    this.addRectangleEditorIfNeeded(/* isCommitting = */ false);
   }
 
   /**

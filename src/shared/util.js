@@ -75,6 +75,7 @@ const AnnotationEditorType = {
   HIGHLIGHT: 9,
   STAMP: 13,
   INK: 15,
+  RECTANGLE: 16,
 };
 
 const AnnotationEditorParamsType = {
@@ -91,7 +92,8 @@ const AnnotationEditorParamsType = {
   HIGHLIGHT_THICKNESS: 33,
   HIGHLIGHT_FREE: 34,
   HIGHLIGHT_SHOW_ALL: 35,
-  BACKGROUND_COLOR: 36,
+  RECTANGLE_COLOR: 36,
+  RECTANGLE_OPACITY: 37,
 };
 
 // Permission flags from Table 22, Section 7.6.3.2 of the PDF specification.
@@ -152,6 +154,7 @@ const AnnotationType = {
   WATERMARK: 24,
   THREED: 25,
   REDACT: 26,
+  RECTANGLE: 27,
 };
 
 const AnnotationReplyType = {

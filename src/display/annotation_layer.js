@@ -129,6 +129,9 @@ class AnnotationElementFactory {
       case AnnotationType.INK:
         return new InkAnnotationElement(parameters);
 
+      case AnnotationType.RECTANGLE:
+        return new RectangleAnnotationElement(parameters);
+
       case AnnotationType.POLYGON:
         return new PolygonAnnotationElement(parameters);
 
@@ -2707,6 +2710,68 @@ class InkAnnotationElement extends AnnotationElement {
   }
 }
 
+class RectangleAnnotationElement extends AnnotationElement {
+  #rectangle = null;
+
+  constructor(parameters) {
+    super(parameters, { isRenderable: true, ignoreBorder: true });
+
+    this.containerClassName = "rectangleAnnotation";
+
+    this.svgElementName = "svg:rect";
+    this.annotationEditorType = AnnotationEditorType.RECTANGLE;
+  }
+
+  render() {
+    this.container.classList.add("rectangleAnnotation");
+
+    // Create an invisible rectangle with the same rectangle that acts as the
+    // trigger for the popup. Only the rectangle itself should trigger the
+    // popup, not the entire container.
+    const data = this.data;
+    const { width, height } = getRectDims(data.rect);
+    const svg = this.svgFactory.create(
+      width,
+      height,
+      /* skipDimensions = */ true
+    );
+
+    // The browser draws half of the borders inside the rectangle and half of
+    // the borders outside the rectangle by default. This behavior cannot be
+    // changed programmatically, so correct for that here.
+    const borderWidth = data.borderStyle.width;
+    const rectangle = (this.#rectangle = this.svgFactory.createElement("svg:rect"));
+    rectangle.setAttribute("x", borderWidth / 2);
+    rectangle.setAttribute("y", borderWidth / 2);
+    rectangle.setAttribute("width", width - borderWidth);
+    rectangle.setAttribute("height", height - borderWidth);
+    // Ensure that the 'stroke-width' is always non-zero, since otherwise it
+    // won't be possible to open/close the popup (note e.g. issue 11122).
+    rectangle.setAttribute("stroke-width", borderWidth || 1);
+    rectangle.setAttribute("stroke", "transparent");
+    rectangle.setAttribute("fill", "black");
+
+    svg.append(rectangle);
+    this.container.append(svg);
+
+    // Create the popup ourselves so that we can bind it to the rectangle instead
+    // of to the entire container (which is the default).
+    if (!data.popupRef && this.hasPopupData) {
+      this._createPopup();
+    }
+
+    return this.container;
+  }
+
+  getElementsToTriggerPopup() {
+    return this.#rectangle;
+  }
+
+  addHighlightArea() {
+    this.container.classList.add("highlightArea");
+  }
+}
+
 class HighlightAnnotationElement extends AnnotationElement {
   constructor(parameters) {
     super(parameters, {
@@ -3076,5 +3141,6 @@ export {
   AnnotationLayer,
   FreeTextAnnotationElement,
   InkAnnotationElement,
+  RectangleAnnotationElement,
   StampAnnotationElement,
 };

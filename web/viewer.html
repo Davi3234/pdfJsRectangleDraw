@@ -22,36 +22,14 @@ See https://github.com/adobe-type-tools/cmap-resources
 -->
 <html dir="ltr" mozdisallowselectionprint>
   <head>
-    <script>
-
-    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<!--#if GENERIC || CHROME-->
     <meta name="google" content="notranslate">
-<!--#endif-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>PDF.js viewer</title>
 
-<!--#if MOZCENTRAL-->
-<!--#include viewer-snippet-firefox-extension.html-->
-<!--#elif CHROME-->
-<!--#include viewer-snippet-chrome-extension.html-->
-<!--#else-->
-<!--#include viewer-snippet.html-->
-<!--#endif-->
-
-<!--#if MOZCENTRAL-->
-<!--<link rel="stylesheet" href="resource://pdf.js/web/viewer.css">-->
-<!--<link rel="localization" href="toolkit/pdfviewer/viewer.ftl"/>-->
-<!--#else-->
     <link rel="stylesheet" href="viewer.css">
-<!--#endif-->
 
-<!--#if MOZCENTRAL-->
-<!--<script src="resource://pdf.js/web/viewer.mjs" type="module"></script>-->
-<!--#elif !MOZCENTRAL-->
-<!--<script src="viewer.mjs" type="module"></script>-->
-<!--#elif /* Development mode. */-->
     <link rel="resource" type="application/l10n" href="locale/locale.json">
 
     <script type="importmap">
@@ -227,6 +205,19 @@ See https://github.com/adobe-type-tools/cmap-resources
           </div>
         </div>
 
+        <div class="editorParamsToolbar hidden doorHangerRight" id="editorRectangleParamsToolbar">
+          <div class="editorParamsToolbarContainer">
+            <div class="editorParamsSetter">
+              <label for="editorRectangleColor" class="editorParamsLabel" data-l10n-id="pdfjs-editor-rectangle-color-input">Color</label>
+              <input type="color" id="editorRectangleColor" class="editorParamsColor" tabindex="105">
+            </div>
+            <div class="editorParamsSetter">
+              <label for="editorRectangleOpacity" class="editorParamsLabel" data-l10n-id="pdfjs-editor-rectangle-opacity-input">Opacity</label>
+              <input type="range" id="editorRectangleOpacity" class="editorParamsSlider" value="100" min="1" max="100" step="1" tabindex="107">
+            </div>
+          </div>
+        </div>
+
         <div class="editorParamsToolbar hidden doorHangerRight" id="editorStampParamsToolbar">
           <div class="editorParamsToolbarContainer">
             <button id="editorStampAddImage" class="secondaryToolbarButton" title="Add image" tabindex="108" data-l10n-id="pdfjs-editor-stamp-add-image-button">
@@ -369,10 +360,10 @@ See https://github.com/adobe-type-tools/cmap-resources
                   <button id="editorInk" class="toolbarButton" disabled="disabled" title="Draw" role="radio" aria-checked="false" aria-controls="editorInkParamsToolbar" tabindex="33" data-l10n-id="pdfjs-editor-ink-button">
                     <span data-l10n-id="pdfjs-editor-ink-button-label">Draw</span>
                   </button>
-                  <button id="editorSquare" class="toolbarButton" title="Draw Square" role="radio" aria-checked="false" aria-controls="editorSquareParamsToolbar" tabindex="34" data-l10n-id="pdfjs-editor-square-button">
-                    <span data-l10n-id="pdfjs-editor-square-button-label">Draw Square</span>
+                  <button id="editorRectangle" class="toolbarButton" disabled="disabled" title="Draw a Rectangle" role="radio" aria-checked="false" aria-controls="editorRectangleParamsToolbar" tabindex="34" data-l10n-id="pdfjs-editor-rectangle-button">
+                    <span data-l10n-id="pdfjs-editor-rectangle-button-label">Draw a Rectangle</span>
                   </button>
-                  <button id="editorStamp" class="toolbarButton hidden" disabled="disabled" title="Add or edit images" role="radio" aria-checked="false" aria-controls="editorStampParamsToolbar" tabindex="34" data-l10n-id="pdfjs-editor-stamp-button">
+                  <button id="editorStamp" class="toolbarButton hidden" disabled="disabled" title="Add or edit images" role="radio" aria-checked="false" aria-controls="editorStampParamsToolbar" tabindex="35" data-l10n-id="pdfjs-editor-stamp-button">
                     <span data-l10n-id="pdfjs-editor-stamp-button-label">Add or edit images</span>
                   </button>
                 </div>

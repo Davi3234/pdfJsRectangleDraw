@@ -24,6 +24,9 @@ import { AnnotationEditorParamsType } from "pdfjs-lib";
  * @property {HTMLInputElement} editorInkColor
  * @property {HTMLInputElement} editorInkThickness
  * @property {HTMLInputElement} editorInkOpacity
+ * @property {HTMLInputElement} editorRectangleColor
+ * @property {HTMLInputElement} editorRectangleThickness
+ * @property {HTMLInputElement} editorRectangleOpacity
  * @property {HTMLButtonElement} editorStampAddImage
  * @property {HTMLInputElement} editorFreeHighlightThickness
  * @property {HTMLButtonElement} editorHighlightShowAll
@@ -48,6 +51,8 @@ class AnnotationEditorParams {
     editorInkColor,
     editorInkThickness,
     editorInkOpacity,
+    editorRectangleColor,
+    editorRectangleOpacity,
     editorStampAddImage,
     editorFreeHighlightThickness,
     editorHighlightShowAll,
@@ -73,6 +78,12 @@ class AnnotationEditorParams {
     });
     editorInkOpacity.addEventListener("input", function () {
       dispatchEvent("INK_OPACITY", this.valueAsNumber);
+    });
+    editorRectangleColor.addEventListener("input", function () {
+      dispatchEvent("RECTANGLE_COLOR", this.value);
+    });
+    editorRectangleOpacity.addEventListener("input", function () {
+      dispatchEvent("RECTANGLE_OPACITY", this.valueAsNumber);
     });
     editorStampAddImage.addEventListener("click", () => {
       dispatchEvent("CREATE");
@@ -103,6 +114,12 @@ class AnnotationEditorParams {
             break;
           case AnnotationEditorParamsType.INK_OPACITY:
             editorInkOpacity.value = value;
+            break;
+          case AnnotationEditorParamsType.RECTANGLE_COLOR:
+            editorRectangleColor.value = value;
+            break;
+          case AnnotationEditorParamsType.RECTANGLE_OPACITY:
+            editorRectangleOpacity.value = value;
             break;
           case AnnotationEditorParamsType.HIGHLIGHT_THICKNESS:
             editorFreeHighlightThickness.value = value;

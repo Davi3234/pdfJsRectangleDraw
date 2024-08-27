@@ -260,7 +260,6 @@ class PrintAnnotationStorage extends AnnotationStorage {
 
   constructor(parent) {
     super();
-    debugger;
     const { map, hash, transfer } = parent.serializable;
     // Create a *copy* of the data, since Objects are passed by reference in JS.
     const clone = structuredClone(map, transfer ? { transfer } : null);

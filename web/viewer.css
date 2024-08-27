@@ -587,6 +587,10 @@ body {
   inset-inline-end: calc(var(--editor-toolbar-base-offset) + 28px);
 }
 
+#editorRectangleParamsToolbar {
+  inset-inline-end: calc(var(--editor-toolbar-base-offset) + 28px);
+}
+
 #editorFreeTextParamsToolbar {
   inset-inline-end: calc(var(--editor-toolbar-base-offset) + 56px);
 }
@@ -920,6 +924,10 @@ body {
 
 #editorInk::before {
   mask-image: var(--toolbarButton-editorInk-icon);
+}
+
+#editorRectangle::before {
+  mask-image: var(--toolbarButton-editorRectangle-icon);
 }
 
 #editorStamp::before {

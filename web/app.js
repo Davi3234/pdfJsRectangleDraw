@@ -1774,6 +1774,7 @@ const PDFViewerApplication = {
       });
       return;
     }
+
     this.printService = PDFPrintServiceFactory.createPrintService({
       pdfDocument: this.pdfDocument,
       pagesOverview: this.pdfViewer.getPagesOverview(),

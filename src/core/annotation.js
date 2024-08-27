@@ -214,6 +214,9 @@ class AnnotationFactory {
       case "Square":
         return new SquareAnnotation(parameters);
 
+      case "Rectangle":
+        return new RectangleAnnotation(parameters);
+
       case "Circle":
         return new CircleAnnotation(parameters);
 
@@ -375,6 +378,11 @@ class AnnotationFactory {
             InkAnnotation.createNewAnnotation(xref, annotation, dependencies)
           );
           break;
+        case AnnotationEditorType.RECTANGLE:
+          promises.push(
+            RectangleAnnotation.createNewAnnotation(xref, annotation, dependencies)
+          );
+          break;
         case AnnotationEditorType.STAMP:
           if (!isOffscreenCanvasSupported) {
             break;
@@ -478,7 +486,18 @@ class AnnotationFactory {
               annotation,
               {
                 evaluatorOptions: options,
-                backgroundColor: [0,0,0]
+              }
+            )
+          );
+          break;
+        case AnnotationEditorType.RECTANGLE:
+          promises.push(
+            RectangleAnnotation.createNewPrintAnnotation(
+              annotationGlobals,
+              xref,
+              annotation,
+              {
+                evaluatorOptions: options,
               }
             )
           );
@@ -1743,9 +1762,6 @@ class MarkupAnnotation extends Annotation {
     annotation,
     params
   ) {
-    if(params.backgroundColor != '' && params.backgroundColor !== undefined){
-      annotation.fillColor = params.backgroundColor;
-    }
     const ap = await this.createNewAppearanceStream(annotation, xref, params);
     const annotationDict = this.createNewDict(annotation, xref, { ap });
 
@@ -1758,10 +1774,6 @@ class MarkupAnnotation extends Annotation {
 
     if (annotation.ref) {
       newAnnotation.ref = newAnnotation.refToReplace = annotation.ref;
-    }
-    if(params.backgroundColor != '' && params.backgroundColor !== undefined){
-      newAnnotation.fillColor = params.backgroundColor;
-      newAnnotation.backgroundColor = params.backgroundColor;
     }
 
     return newAnnotation;
@@ -4097,6 +4109,55 @@ class LineAnnotation extends MarkupAnnotation {
   }
 }
 
+class SquareAnnotation extends MarkupAnnotation {
+  constructor(params) {
+    super(params);
+
+    const { dict, xref } = params;
+    this.data.annotationType = AnnotationType.SQUARE;
+    this.data.hasOwnCanvas = this.data.noRotate;
+    this.data.noHTML = false;
+
+    if (!this.appearance) {
+      // The default stroke color is black.
+      const strokeColor = this.color ? getPdfColorArray(this.color) : [0, 0, 0];
+      const strokeAlpha = dict.get("CA");
+
+      const interiorColor = getRgbColor(dict.getArray("IC"), null);
+      // The default fill color is transparent.
+      const fillColor = interiorColor ? getPdfColorArray(interiorColor) : null;
+      const fillAlpha = fillColor ? strokeAlpha : null;
+
+      if (this.borderStyle.width === 0 && !fillColor) {
+        // Prevent rendering a "hairline" border (fixes issue14164.pdf).
+        return;
+      }
+
+      this._setDefaultAppearance({
+        xref,
+        extra: `${this.borderStyle.width} w`,
+        strokeColor,
+        fillColor,
+        strokeAlpha,
+        fillAlpha,
+        pointsCallback: (buffer, points) => {
+          const x = points[2].x + this.borderStyle.width / 2;
+          const y = points[2].y + this.borderStyle.width / 2;
+          const width = points[3].x - points[2].x - this.borderStyle.width;
+          const height = points[1].y - points[3].y - this.borderStyle.width;
+          buffer.push(`${x} ${y} ${width} ${height} re`);
+          if (fillColor) {
+            buffer.push("B");
+          } else {
+            buffer.push("S");
+          }
+          return [points[0].x, points[1].x, points[3].y, points[1].y];
+        },
+      });
+    }
+  }
+}
+
 class CircleAnnotation extends MarkupAnnotation {
   constructor(params) {
     super(params);
@@ -4252,58 +4313,10 @@ class CaretAnnotation extends MarkupAnnotation {
   }
 }
 
-class SquareAnnotation extends MarkupAnnotation {
-  constructor(params) {
-    super(params);
-
-    const { dict, xref } = params;
-    this.data.annotationType = AnnotationType.SQUARE;
-    this.data.hasOwnCanvas = this.data.noRotate;
-    this.data.noHTML = false;
-
-    if (!this.appearance) {
-      // The default stroke color is black.
-      const strokeColor = this.color ? getPdfColorArray(this.color) : [0, 0, 0];
-      const strokeAlpha = dict.get("CA");
-
-      const interiorColor = getRgbColor(dict.getArray("IC"), null);
-      // The default fill color is transparent.
-      const fillColor = interiorColor ? getPdfColorArray(interiorColor) : null;
-      const fillAlpha = fillColor ? strokeAlpha : null;
-
-      if (this.borderStyle.width === 0 && !fillColor) {
-        // Prevent rendering a "hairline" border (fixes issue14164.pdf).
-        return;
-      }
-
-      this._setDefaultAppearance({
-        xref,
-        extra: `${this.borderStyle.width} w`,
-        strokeColor,
-        fillColor,
-        strokeAlpha,
-        fillAlpha,
-        pointsCallback: (buffer, points) => {
-          const x = points[2].x + this.borderStyle.width / 2;
-          const y = points[2].y + this.borderStyle.width / 2;
-          const width = points[3].x - points[2].x - this.borderStyle.width;
-          const height = points[1].y - points[3].y - this.borderStyle.width;
-          buffer.push(`${x} ${y} ${width} ${height} re`);
-          if (fillColor) {
-            buffer.push("B");
-          } else {
-            buffer.push("S");
-          }
-          return [points[0].x, points[1].x, points[3].y, points[1].y];
-        },
-      });
-    }
-  }
-}
-
 class InkAnnotation extends MarkupAnnotation {
   constructor(params) {
     super(params);
+
     this.data.hasOwnCanvas = this.data.noRotate;
     this.data.noHTML = false;
 
@@ -4328,6 +4341,7 @@ class InkAnnotation extends MarkupAnnotation {
         });
       }
     }
+
     if (!this.appearance) {
       // The default stroke color is black.
       const strokeColor = this.color ? getPdfColorArray(this.color) : [0, 0, 0];
@@ -4355,7 +4369,6 @@ class InkAnnotation extends MarkupAnnotation {
         xref,
         extra: `${borderWidth} w`,
         strokeColor,
-        fillColor: [0,0,0],
         strokeAlpha,
         pointsCallback: (buffer, points) => {
           // According to the specification, see "12.5.6.13 Ink Annotations":
@@ -4387,7 +4400,6 @@ class InkAnnotation extends MarkupAnnotation {
     ink.set("InkList", outlines?.points || paths.map(p => p.points));
     ink.set("F", 4);
     ink.set("Rotate", rotation);
-    ink.set("BG", [0,0,0]);
 
     if (outlines) {
       // Free highlight.
@@ -4472,7 +4484,6 @@ class InkAnnotation extends MarkupAnnotation {
     appearanceStreamDict.set("Type", Name.get("XObject"));
     appearanceStreamDict.set("BBox", rect);
     appearanceStreamDict.set("Length", appearance.length);
-    appearanceStreamDict.set("BG", [0,0,0]);
 
     if (opacity !== 1) {
       const resources = new Dict(xref);
@@ -4530,7 +4541,6 @@ class InkAnnotation extends MarkupAnnotation {
     appearanceStreamDict.set("Type", Name.get("XObject"));
     appearanceStreamDict.set("BBox", rect);
     appearanceStreamDict.set("Length", appearance.length);
-    appearanceStreamDict.set("BG", [0,0,0]);
 
     const resources = new Dict(xref);
     const extGState = new Dict(xref);
@@ -4973,6 +4983,185 @@ class FileAttachmentAnnotation extends MarkupAnnotation {
       typeof fillAlpha === "number" && fillAlpha >= 0 && fillAlpha <= 1
         ? fillAlpha
         : null;
+  }
+}
+
+class RectangleAnnotation extends MarkupAnnotation {
+  constructor(params) {
+
+    super(params);
+
+    const { dict, xref } = params;
+    this.data.annotationType = AnnotationType.RECTANGLE;
+    this.data.hasOwnCanvas = this.data.noRotate;
+    this.data.noHTML = false;
+
+    if (this.appearance) {
+      // The default stroke color is black.
+      const strokeColor = this.color ? getPdfColorArray(this.color) : [0, 0, 0];
+      const strokeAlpha = dict.get("CA");
+
+      const interiorColor = getRgbColor(dict.getArray("BG"), null);
+      // The default fill color is transparent.
+      const fillColor = interiorColor ? getPdfColorArray(interiorColor) : null;
+      const fillAlpha = fillColor ? strokeAlpha : null;
+
+      if (this.borderStyle.width === 0 && !fillColor) {
+        // Prevent rendering a "hairline" border (fixes issue14164.pdf).
+        return;
+      }
+
+      xref,
+      extra,
+      strokeColor,
+      fillColor,
+      blendMode,
+      strokeAlpha,
+      fillAlpha,
+      pointsCallback,
+
+      this._setDefaultAppearance({
+        xref,
+        extra: `${this.borderStyle.width} w`,
+        strokeColor,
+        fillColor,
+        strokeAlpha,
+        fillAlpha,
+        pointsCallback: (buffer, points) => {
+          const x = points[2].x + this.borderStyle.width / 2;
+          const y = points[2].y + this.borderStyle.width / 2;
+          const width = points[3].x - points[2].x - this.borderStyle.width;
+          const height = points[1].y - points[3].y - this.borderStyle.width;
+          buffer.push(`${x} ${y} ${width} ${height} re`);
+          if (fillColor) {
+            buffer.push("B");
+          } else {
+            buffer.push("S");
+          }
+          return [points[0].x, points[1].x, points[3].y, points[1].y];
+        },
+      });
+    }
+  }
+
+  static createNewDict(annotation, xref, { apRef, ap }) {
+    
+    const { color, opacity, paths, outlines, rect, thickness } = annotation;
+    const rectangle = new Dict(xref);
+    rectangle.set("Type", Name.get("Annot"));
+    rectangle.set("Subtype", Name.get("Rect"));
+    rectangle.set("CreationDate", `D:${getModificationDate()}`);
+    rectangle.set("Rect", rect);
+    rectangle.set("RectList", outlines?.points || paths.map(p => p.points));
+    rectangle.set("F", 4);
+    //BackgroundColor
+    rectangle.set("BG",Array.from(color, c => c / 255));
+
+    if (outlines) {
+      // Free highlight.
+      // There's nothing about this in the spec, but it's used when highlighting
+      // in Edge's viewer. Acrobat takes into account this parameter to indicate
+      // that the Ink is used for highlighting.
+      rectangle.set("IT", Name.get("RectHighlight"));
+    }
+
+    // Line thickness.
+    const bs = new Dict(xref);
+    rectangle.set("BS", bs);
+    bs.set("W", thickness);
+
+    // Color.
+    rectangle.set(
+      "C",
+      Array.from(color, c => c / 255)
+    );
+
+    // Opacity.
+    rectangle.set("CA", opacity);
+
+    const n = new Dict(xref);
+    rectangle.set("AP", n);
+
+    if (apRef) {
+      n.set("N", apRef);
+    } else {
+      n.set("N", ap);
+    }
+
+    return rectangle;
+  }
+
+  static async createNewAppearanceStream(annotation, xref, params) {
+    
+    const { color, rect, paths, thickness, opacity } = annotation;
+
+    const appearanceBuffer = [
+      `${thickness} w 1 J 1 j`,
+      `${getPdfColor(color, /* isFill */ false)}`,
+    ];
+
+    if (opacity !== 1) {
+      appearanceBuffer.push("/R0 gs");
+    }
+
+    const buffer = [];
+    for (const { bezier } of paths) {
+      buffer.length = 0;
+      buffer.push(
+        `${numberToString(bezier[0])} ${numberToString(bezier[1])} m`
+      );
+      if (bezier.length === 2) {
+        buffer.push(
+          `${numberToString(bezier[0])} ${numberToString(bezier[1])} l S`
+        );
+      } else {
+        for (let i = 2, ii = bezier.length; i < ii; i += 6) {
+          const curve = bezier
+            .slice(i, i + 6)
+            .map(numberToString)
+            .join(" ");
+          buffer.push(`${curve} c`);
+        }
+        buffer.push("S");
+      }
+      appearanceBuffer.push(buffer.join("\n"));
+    }
+
+    const [x, y, width, height] = rect;
+
+    buffer.push(`${numberToString(x)} ${numberToString(y)} m`); // Mover para o canto inferior esquerdo
+    buffer.push(`${numberToString(x + width)} ${numberToString(y)} l`); // Linha para o canto inferior direito
+    buffer.push(`${numberToString(x + width)} ${numberToString(y + height)} l`); // Linha para o canto superior direito
+    buffer.push(`${numberToString(x)} ${numberToString(y + height)} l`); // Linha para o canto superior esquerdo
+    buffer.push("h"); // Fechar o caminho (volta para o ponto inicial para fechar o retângulo)
+    buffer.push("f"); // Aplicar preenchimento
+
+    appearanceBuffer.push(buffer.join("\n"));
+    const appearance = appearanceBuffer.join("\n");
+
+    const appearanceStreamDict = new Dict(xref);
+    appearanceStreamDict.set("FormType", 1);
+    appearanceStreamDict.set("Subtype", Name.get("Form"));
+    appearanceStreamDict.set("Type", Name.get("XObject"));
+    appearanceStreamDict.set("BBox", rect);
+    appearanceStreamDict.set("Length", appearance.length);
+    appearanceStreamDict.set("BG",Array.from(color, c => c / 255));
+
+    if (opacity !== 1) {
+      const resources = new Dict(xref);
+      const extGState = new Dict(xref);
+      const r0 = new Dict(xref);
+      r0.set("CA", opacity);
+      r0.set("Type", Name.get("ExtGState"));
+      extGState.set("R0", r0);
+      resources.set("ExtGState", extGState);
+      appearanceStreamDict.set("Resources", resources);
+    }
+
+    const ap = new StringStream(appearance);
+    ap.dict = appearanceStreamDict;
+
+    return ap;
   }
 }
 

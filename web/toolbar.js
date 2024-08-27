@@ -98,6 +98,18 @@ class Toolbar {
         },
       },
       {
+        element: options.editorRectangleButton,
+        eventName: "switchannotationeditormode",
+        eventDetails: {
+          get mode() {
+            const { classList } = options.editorRectangleButton;
+            return classList.contains("toggled")
+              ? AnnotationEditorType.NONE
+              : AnnotationEditorType.RECTANGLE;
+          },
+        },
+      },
+      {
         element: options.editorStampButton,
         eventName: "switchannotationeditormode",
         eventDetails: {
@@ -244,6 +256,8 @@ class Toolbar {
       editorHighlightParamsToolbar,
       editorInkButton,
       editorInkParamsToolbar,
+      editorRectangleButton,
+      editorRectangleParamsToolbar,
       editorStampButton,
       editorStampParamsToolbar,
     } = this.#opts;
@@ -264,6 +278,11 @@ class Toolbar {
       editorInkParamsToolbar
     );
     toggleCheckedBtn(
+      editorRectangleButton,
+      mode === AnnotationEditorType.RECTANGLE,
+      editorRectangleParamsToolbar
+    );
+    toggleCheckedBtn(
       editorStampButton,
       mode === AnnotationEditorType.STAMP,
       editorStampParamsToolbar
@@ -273,6 +292,7 @@ class Toolbar {
     editorFreeTextButton.disabled = isDisable;
     editorHighlightButton.disabled = isDisable;
     editorInkButton.disabled = isDisable;
+    editorRectangleButton.disabled = isDisable;
     editorStampButton.disabled = isDisable;
   }
 
